@@ -345,4 +345,5 @@ This project is proprietary software developed for COMCAT University. All rights
 
 &copy; 2025 COMCAT University. Developed by Muhammad Kashif Latif.
 #   C o m c a t - U n i v e r s i t y  
+ #   C o m c a t - U n i v e r s i t y  
  
