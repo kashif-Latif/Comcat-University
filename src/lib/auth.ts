@@ -75,5 +75,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/",
   },
-  secret: process.env.NEXTAUTH_SECRET || "university-management-secret-key-2024",
+  secret: process.env.NEXTAUTH_SECRET,
 }

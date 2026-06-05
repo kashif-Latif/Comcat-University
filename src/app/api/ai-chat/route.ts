@@ -47,7 +47,7 @@ BEHAVIOR RULES:
 - Never make up information about deadlines, specific dates, or exact fee amounts that may change
 - Respond in English unless the user writes in another language`
 
-function trimConversation(history: Array<{ role: string; content: string }>): Array<{ role: string; content: string }> {
+function trimConversation(history: Message[]): Message[] {
   const maxMessages = 24
   if (history.length <= maxMessages) return history
   return [history[0], ...history.slice(-(maxMessages - 1))]
@@ -134,8 +134,15 @@ async function callAI(messages: Message[]): Promise<string> {
     )
 
     if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Gemini API error (${res.status}): ${err}`)
+      const errBody = await res.text()
+      // Provide user-friendly messages for common Gemini errors
+      if (res.status === 403) {
+        throw new Error('GEMINI_API_KEY_INVALID: Your API key has been revoked or is invalid. Please generate a new key at https://aistudio.google.com/apikey')
+      }
+      if (res.status === 429) {
+        throw new Error('GEMINI_QUOTA_EXCEEDED: Free tier quota exhausted. Wait a few minutes, enable billing in Google AI Studio, or generate a new API key at https://aistudio.google.com/apikey')
+      }
+      throw new Error(`Gemini API error (${res.status}): ${errBody}`)
     }
 
     const data = await res.json()
@@ -171,7 +178,7 @@ export async function POST(request: NextRequest) {
         const extra = JSON.parse(request.headers.get('x-conversation-history')!)
         for (const msg of extra) {
           if (msg.role === 'user' || msg.role === 'assistant') {
-            clientHistory.push({ role: msg.role, content: msg.content })
+            clientHistory.push({ role: msg.role as 'user' | 'assistant', content: msg.content })
           }
         }
       } catch {}
@@ -191,8 +198,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, response: aiResponse })
   } catch (error) {
     console.error('AI Chat error:', error)
+    const errMsg = String(error)
+    // Pass through specific user-actionable errors so the frontend can display them
+    if (errMsg.includes('GEMINI_API_KEY_INVALID')) {
+      return NextResponse.json(
+        { error: 'Your Gemini API key has been revoked or is invalid. Please generate a new key at https://aistudio.google.com/apikey and update your .env file.', details: errMsg },
+        { status: 403 }
+      )
+    }
+    if (errMsg.includes('GEMINI_QUOTA_EXCEEDED')) {
+      return NextResponse.json(
+        { error: 'Gemini free tier quota exhausted. Please wait a few minutes, enable billing, or use a different API key.', details: errMsg },
+        { status: 429 }
+      )
+    }
+    if (errMsg.includes('GEMINI_API_KEY is not set')) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY is not configured. Add it to your .env file. Get a key at https://aistudio.google.com/apikey', details: errMsg },
+        { status: 500 }
+      )
+    }
     return NextResponse.json(
-      { error: 'Failed to get AI response', details: String(error) },
+      { error: 'Failed to get AI response', details: errMsg },
       { status: 500 }
     )
   }

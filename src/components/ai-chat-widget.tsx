@@ -115,9 +115,13 @@ export function AIChatWidget() {
           { role: 'assistant', content: data.response, timestamp: Date.now() },
         ])
       } else {
+        // Show specific error message if the API provided one (e.g. key revoked, quota exceeded)
+        const errorMsg = data.error
+          ? `⚠️ ${data.error}`
+          : 'Sorry, I encountered an issue. Please try again or contact us at admin@comcat.edu.pk.'
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I encountered an issue. Please try again or contact us at admin@comcat.edu.pk.', timestamp: Date.now() },
+          { role: 'assistant', content: errorMsg, timestamp: Date.now() },
         ])
       }
     } catch {
