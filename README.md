@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="public/logo.svg" alt="COMCAT University Logo" width="120" height="120" />
-</p>
+
 
 <h1 align="center">COMCAT University — Official Web Portal</h1>
 
@@ -144,7 +142,7 @@ comcat-university/
 │   ├── lib/                     # Utilities (supabase, auth, utils)
 │   ├── store/                   # Zustand stores
 │   └── types/                   # TypeScript type definitions
-├── .env.example
+├── .env.local.example
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
@@ -276,54 +274,29 @@ The application uses Supabase (PostgreSQL). Key tables include:
 
 ## Deployment
 
-### Environment Variables (Required for Deployment)
-
-Set these environment variables on your deployment platform:
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | `https://xxxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key | `eyJhbGciOi...` |
-| `NEXTAUTH_SECRET` | NextAuth JWT secret | Any random string |
-| `NEXTAUTH_URL` | Your deployed URL | `https://your-domain.com` |
-
-See `.env.example` for the full list including optional variables.
-
-### Vercel
+### Vercel (Recommended)
 
 1. Push your code to GitHub
 2. Import the repository in [Vercel](https://vercel.com)
-3. Add the environment variables above in the Vercel dashboard
+3. Add all environment variables in the Vercel dashboard
 4. Deploy
 
-### Docker
+### Docker (Alternative)
 
 ```dockerfile
-FROM node:20-alpine AS builder
+FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
-
-FROM node:20-alpine
-WORKDIR /app
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
 EXPOSE 3000
-ENV NODE_ENV=production
-ENV PORT=3000
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
 ```
 
 ### Any Node.js Host
 
-The project builds to a standalone server in `.next/standalone/`. Set all required environment variables on the host and run:
-
-```bash
-node .next/standalone/server.js
-```
+The project builds to a standalone server in `.next/standalone/`. Ensure all environment variables are set on the host.
 
 ---
 
@@ -344,6 +317,3 @@ Contributions are welcome. Please follow these steps:
 This project is proprietary software developed for COMCAT University. All rights reserved.
 
 &copy; 2025 COMCAT University. Developed by Muhammad Kashif Latif.
-#   C o m c a t - U n i v e r s i t y  
- #   C o m c a t - U n i v e r s i t y  
- 
