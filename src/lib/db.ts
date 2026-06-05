@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client'
+// ─── Database Abstraction ─────────────────────────────────
+// This project uses Supabase REST API (supabaseQuery) instead of Prisma.
+// This stub is kept for compatibility in case any code expects a Prisma-like client.
+// All actual DB operations go through @/lib/supabase
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+import { supabaseQuery } from './supabase'
+
+export const db = {
+  // Delegates to supabaseQuery under the hood
+  query: supabaseQuery,
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+export type DB = typeof db

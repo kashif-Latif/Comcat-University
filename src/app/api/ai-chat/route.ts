@@ -142,18 +142,13 @@ async function callAI(messages: Message[]): Promise<string> {
     return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
   }
 
-  // ─── Z.ai SDK (only works on Z.ai platform) ───
+  // ─── Z.ai SDK (only works on Z.ai platform — not available on Vercel) ───
   if (provider === 'zai') {
-    const ZAI = (await import('z-ai-web-dev-sdk')).default
-    const zai = await ZAI.create()
-    const completion = await zai.chat.completions.create({
-      messages,
-      thinking: { type: 'disabled' },
-    })
-    return completion.choices[0]?.message?.content || ''
+    console.warn('[AI] Z.ai provider is not supported on this platform. Falling back to Gemini.')
+    // Fall through to error at the end
   }
 
-  throw new Error(`Unknown AI_PROVIDER: ${provider}. Use 'openai', 'gemini', or 'zai'.`)
+  throw new Error(`Unknown or unsupported AI_PROVIDER: "${provider}". Use 'openai' or 'gemini'.`)
 }
 
 export async function POST(request: NextRequest) {

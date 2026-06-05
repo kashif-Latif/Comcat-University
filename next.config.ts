@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "vednmmjioipjimlsjdmz.supabase.co",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
