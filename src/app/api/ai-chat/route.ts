@@ -56,23 +56,62 @@ function trimConversation(history: Message[]): Message[] {
 /**
  * AI provider abstraction.
  * Supports:
- *   1. xAI Grok (OpenAI-compatible REST) — FREE tier available!
- *   2. OpenAI-compatible API (OpenAI, Together AI, Groq, Deepseek, etc.)
- *   3. Google Gemini (via REST)
- *   4. Z.ai SDK (z-ai-web-dev-sdk) — only works on Z.ai platform
+ *   1. Groq (OpenAI-compatible REST) — FREE, ultra-fast! Uses Llama/Mixtral models
+ *   2. xAI Grok (OpenAI-compatible REST) — FREE tier available
+ *   3. OpenAI-compatible API (OpenAI, Together AI, Deepseek, etc.)
+ *   4. Google Gemini (via REST)
+ *   5. Z.ai SDK (z-ai-web-dev-sdk) — only works on Z.ai platform
  *
  * The provider is selected via the AI_PROVIDER env var:
+ *   AI_PROVIDER=groq       → uses GROQ_API_KEY (free at https://console.groq.com)
  *   AI_PROVIDER=grok       → uses GROK_API_KEY (free tier at https://console.x.ai)
  *   AI_PROVIDER=openai     → uses OPENAI_API_KEY
  *   AI_PROVIDER=gemini     → uses GEMINI_API_KEY
  *   AI_PROVIDER=zai        → uses z-ai-web-dev-sdk (Z.ai platform only)
  *
- * Default: grok
+ * Default: groq
  */
 type Message = { role: 'system' | 'user' | 'assistant'; content: string }
 
 async function callAI(messages: Message[]): Promise<string> {
-  const provider = (process.env.AI_PROVIDER || 'grok').toLowerCase()
+  const provider = (process.env.AI_PROVIDER || 'groq').toLowerCase()
+
+  // ─── Groq (FREE, ultra-fast, Llama/Mixtral models) ───
+  if (provider === 'groq') {
+    const apiKey = process.env.GROQ_API_KEY
+    if (!apiKey) throw new Error('GROQ_API_KEY is not set')
+
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+    const baseUrl = 'https://api.groq.com/openai/v1'
+
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 1024,
+        temperature: 0.7,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('GROQ_API_KEY_INVALID: Your Groq API key is invalid or revoked. Get a new key at https://console.groq.com')
+      }
+      if (res.status === 429) {
+        throw new Error('GROQ_QUOTA_EXCEEDED: Groq free tier rate limit reached. Wait a few minutes and try again.')
+      }
+      throw new Error(`Groq API error (${res.status}): ${err}`)
+    }
+
+    const data = await res.json()
+    return data.choices[0]?.message?.content || ''
+  }
 
   // ─── xAI Grok (OpenAI-compatible, FREE tier) ───
   if (provider === 'grok') {
@@ -194,7 +233,7 @@ async function callAI(messages: Message[]): Promise<string> {
     // Fall through to error at the end
   }
 
-  throw new Error(`Unknown or unsupported AI_PROVIDER: "${provider}". Use 'grok', 'openai', or 'gemini'.`)
+  throw new Error(`Unknown or unsupported AI_PROVIDER: "${provider}". Use 'groq', 'grok', 'openai', or 'gemini'.`)
 }
 
 export async function POST(request: NextRequest) {
@@ -239,6 +278,24 @@ export async function POST(request: NextRequest) {
     console.error('AI Chat error:', error)
     const errMsg = String(error)
     // Pass through specific user-actionable errors so the frontend can display them
+    if (errMsg.includes('GROQ_API_KEY_INVALID')) {
+      return NextResponse.json(
+        { error: 'Your Groq API key is invalid or revoked. Get a new key at https://console.groq.com and update your .env file.', details: errMsg },
+        { status: 403 }
+      )
+    }
+    if (errMsg.includes('GROQ_QUOTA_EXCEEDED')) {
+      return NextResponse.json(
+        { error: 'Groq free tier rate limit reached. Wait a few minutes and try again.', details: errMsg },
+        { status: 429 }
+      )
+    }
+    if (errMsg.includes('GROQ_API_KEY is not set')) {
+      return NextResponse.json(
+        { error: 'GROQ_API_KEY is not configured. Add it to your .env file. Get a free key at https://console.groq.com', details: errMsg },
+        { status: 500 }
+      )
+    }
     if (errMsg.includes('GROK_API_KEY_INVALID')) {
       return NextResponse.json(
         { error: 'Your xAI/Grok API key is invalid or revoked. Get a new key at https://console.x.ai and update your .env file.', details: errMsg },
