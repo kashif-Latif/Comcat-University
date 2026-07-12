@@ -317,3 +317,39 @@ Contributions are welcome. Please follow these steps:
 This project is proprietary software developed for COMCAT University. All rights reserved.
 
 &copy; 2025 COMCAT University. Developed by Muhammad Kashif Latif.
+
+---
+
+## Supabase Keep-Alive Cron
+
+The production deployment includes a protected Vercel Cron endpoint at:
+
+```text
+/api/cron/database-health
+```
+
+Vercel calls it once per day at `06:00 UTC` (Hobby-plan execution may occur at
+any point during that hour). The endpoint performs three tiny, read-only
+Supabase queries and never inserts, updates, or deletes data.
+
+### Required Vercel variable
+
+Add this environment variable to the **Production** environment in Vercel:
+
+```env
+CRON_SECRET=your-long-random-secret
+```
+
+Use a random value of at least 16 characters. Do not commit the real value to
+GitHub. After adding it, redeploy the production deployment so the cron job and
+environment variable are active.
+
+The existing variables are also required:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+To verify the schedule after deployment, open the Vercel project and go to
+**Settings > Cron Jobs**. Runtime results are available through **View Logs**.
