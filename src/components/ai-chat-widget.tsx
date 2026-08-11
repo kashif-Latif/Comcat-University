@@ -30,6 +30,10 @@ const QUICK_QUESTIONS = [
   'What are the admission requirements?',
 ]
 
+// Caps to keep chat healthy and responses fast
+const MAX_HISTORY_SENT_TO_SERVER = 12    // last N msgs sent as context
+const MAX_HISTORY_STORED = 40            // last N msgs kept in localStorage
+const STORAGE_KEY = 'comcat-chat-history'
 
 export function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -37,7 +41,7 @@ export function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('comcat-chat-history')
+        const saved = localStorage.getItem(STORAGE_KEY)
         if (saved) {
           const parsed = JSON.parse(saved)
           if (Array.isArray(parsed) && parsed.length > 0) return parsed
@@ -57,11 +61,15 @@ export function AIChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null)
   const sessionIdRef = useRef<string>(`session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
 
-  // Persist messages to localStorage
+  // Persist only the last MAX_HISTORY_STORED messages so localStorage
+  // never bloats past a few KB even for very long sessions.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('comcat-chat-history', JSON.stringify(messages))
+        const capped = messages.length > MAX_HISTORY_STORED
+          ? messages.slice(-MAX_HISTORY_STORED)
+          : messages
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(capped))
       } catch {}
     }
   }, [messages])
@@ -90,20 +98,21 @@ export function AIChatWidget() {
     setIsLoading(true)
 
     try {
-      // Send conversation history so serverless backends (Vercel) can maintain context
+      // Send only the tail of the conversation as context.
+      // History goes in the BODY (not a header) so it never runs into the
+      // ~8 KB Vercel header limit that used to break long chats.
       const historyForServer = messages
         .filter(m => m.role === 'user' || m.role === 'assistant')
+        .slice(-MAX_HISTORY_SENT_TO_SERVER)
         .map(m => ({ role: m.role, content: m.content }))
 
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-conversation-history': JSON.stringify(historyForServer),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text.trim(),
           sessionId: sessionIdRef.current,
+          history: historyForServer,
         }),
       })
 
@@ -115,7 +124,6 @@ export function AIChatWidget() {
           { role: 'assistant', content: data.response, timestamp: Date.now() },
         ])
       } else {
-        // Show specific error message if the API provided one (e.g. key revoked, quota exceeded)
         const errorMsg = data.error
           ? `⚠️ ${data.error}`
           : 'Sorry, I encountered an issue. Please try again or contact us at admin@comcat.edu.pk.'
@@ -153,7 +161,7 @@ export function AIChatWidget() {
     setShowQuickQuestions(true)
     sessionIdRef.current = `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     if (typeof window !== 'undefined') {
-      try { localStorage.removeItem('comcat-chat-history') } catch {}
+      try { localStorage.removeItem(STORAGE_KEY) } catch {}
     }
   }
 
@@ -176,7 +184,6 @@ export function AIChatWidget() {
             aria-label="Open chat"
           >
             <MessageCircle className="h-6 w-6" />
-            {/* Pulse ring */}
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9A84C] opacity-20" />
           </motion.button>
         )}
@@ -237,7 +244,6 @@ export function AIChatWidget() {
             {/* Chat Body (hidden when minimized) */}
             {!isMinimized && (
               <>
-                {/* Messages */}
                 <div className="flex-1 space-y-3 overflow-y-auto p-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}>
                   {messages.map((msg, index) => (
                     <motion.div
@@ -294,7 +300,6 @@ export function AIChatWidget() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Quick Questions */}
                 {showQuickQuestions && messages.length <= 2 && !isLoading && (
                   <div className="border-t border-gray-800/50 px-4 py-2">
                     <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[#525252]">
@@ -314,7 +319,6 @@ export function AIChatWidget() {
                   </div>
                 )}
 
-                {/* Input */}
                 <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-gray-800 bg-[#0a0a0a] px-4 py-3">
                   <input
                     ref={inputRef}

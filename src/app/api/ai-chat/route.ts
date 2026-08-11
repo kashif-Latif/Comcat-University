@@ -112,19 +112,14 @@ async function callGemini(messages: Message[]): Promise<string> {
 }
 
 // ─── Provider chain with automatic fallback ────────────────
-// Tries Groq first (fast + free), then Gemini as backup.
-// Any providers with missing keys are silently skipped.
 async function callAI(messages: Message[]): Promise<string> {
   const errors: string[] = []
   const chain: Array<() => Promise<string>> = []
-
   if (process.env.GROQ_API_KEY) chain.push(() => callGroq(messages))
   if (process.env.GEMINI_API_KEY) chain.push(() => callGemini(messages))
-
   if (chain.length === 0) {
     throw new Error('NO_PROVIDER: No AI provider is configured. Set GROQ_API_KEY or GEMINI_API_KEY.')
   }
-
   for (const fn of chain) {
     try {
       const out = await fn()
@@ -138,37 +133,43 @@ async function callAI(messages: Message[]): Promise<string> {
 
 // ─── Route handler ─────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  // 30 messages per minute per IP — one user typing fast is fine,
-  // a scraper hammering the endpoint gets blocked.
+  // 30 messages per minute per IP
   const limited = rateLimit(request, 'ai-chat:post', 30, 60 * 1000)
   if (limited) return limited
 
   try {
-    const { message, sessionId } = await request.json()
+    const body = await request.json()
+    const { message, sessionId, history: historyFromBody } = body
 
     if (!message || !sessionId) {
       return NextResponse.json({ error: 'Message and sessionId are required' }, { status: 400 })
     }
-
     if (typeof message !== 'string' || message.length > 2000) {
       return NextResponse.json({ error: 'Invalid or oversized message' }, { status: 400 })
     }
 
     const clientHistory: Message[] = [{ role: 'system', content: SYSTEM_PROMPT }]
 
-    const historyHeader = request.headers.get('x-conversation-history')
-    if (historyHeader) {
-      try {
-        const extra = JSON.parse(historyHeader)
-        if (Array.isArray(extra)) {
-          for (const msg of extra.slice(-24)) {
-            if (msg.role === 'user' || msg.role === 'assistant') {
-              const content = String(msg.content || '').slice(0, 4000)
-              if (content) clientHistory.push({ role: msg.role, content })
-            }
-          }
+    // Prefer history from the body (uncapped size).
+    // Fall back to header for old widget builds that still send it.
+    let extra: unknown = null
+    if (Array.isArray(historyFromBody)) {
+      extra = historyFromBody
+    } else {
+      const headerHist = request.headers.get('x-conversation-history')
+      if (headerHist) {
+        try { extra = JSON.parse(headerHist) } catch {}
+      }
+    }
+
+    if (Array.isArray(extra)) {
+      for (const msg of extra.slice(-24)) {
+        const m = msg as { role?: string; content?: string }
+        if (m?.role === 'user' || m?.role === 'assistant') {
+          const content = String(m.content || '').slice(0, 4000)
+          if (content) clientHistory.push({ role: m.role, content })
         }
-      } catch {}
+      }
     }
 
     clientHistory.push({ role: 'user', content: message.trim() })
@@ -178,7 +179,6 @@ export async function POST(request: NextRequest) {
     if (!aiResponse) {
       return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
     }
-
     return NextResponse.json({ success: true, response: aiResponse })
   } catch (error) {
     console.error('AI Chat error:', error)
