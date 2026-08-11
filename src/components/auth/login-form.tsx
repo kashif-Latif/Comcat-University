@@ -36,6 +36,8 @@ import {
   ChevronUp,
   Copy,
   Check,
+  Crown,
+  Building2,
 } from 'lucide-react'
 import type { ViewType } from '@/store/use-app-store'
 
@@ -46,7 +48,6 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-// Given a role, return the view to jump to after successful login.
 function dashboardForRole(role: string): ViewType {
   const r = role.toUpperCase()
   if (r === 'ADMIN')   return 'admin-dashboard'
@@ -56,7 +57,21 @@ function dashboardForRole(role: string): ViewType {
   return 'student-dashboard'
 }
 
+// ─── Demo accounts shown on the login page ────────────────
+// Ordered by seniority — a visitor can click any card and be signed
+// in as that role in one tap. Perfect for a portfolio walk-through.
 const testAccounts = [
+  {
+    role: 'Vice Chancellor',
+    name: 'Dr. Ibrahim Malik',
+    email: 'vc@comcat.edu.pk',
+    password: 'Vc@Demo123',
+    icon: Crown,
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/10',
+    borderColor: 'border-violet-500/20',
+    scope: 'Executive dashboard — university-wide KPIs',
+  },
   {
     role: 'Admin',
     name: 'Muhammad Kashif Latif',
@@ -66,16 +81,29 @@ const testAccounts = [
     color: 'text-red-400',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
+    scope: 'Full CRUD — students, teachers, subjects',
+  },
+  {
+    role: 'HOD',
+    name: 'Prof. Qasim Ali',
+    email: 'prof.qasim@comcat.edu.pk',
+    password: 'Teacher@123456',
+    icon: Building2,
+    color: 'text-sky-400',
+    bgColor: 'bg-sky-500/10',
+    borderColor: 'border-sky-500/20',
+    scope: 'Department-scoped dashboard (Computer Science)',
   },
   {
     role: 'Teacher',
-    name: 'Prof. Qasim Ali',
-    email: 'prof.qasim@comcat.edu.pk',
+    name: 'Dr. Sarah Ahmed',
+    email: 'teacher@comcat.edu.pk',
     password: 'Teacher@123456',
     icon: BookOpen,
     color: 'text-teal-400',
     bgColor: 'bg-teal-500/10',
     borderColor: 'border-teal-500/20',
+    scope: 'Attendance, exams & grade entry',
   },
   {
     role: 'Student',
@@ -86,6 +114,7 @@ const testAccounts = [
     color: 'text-[#C9A84C]',
     bgColor: 'bg-[#C9A84C]/10',
     borderColor: 'border-[#C9A84C]/20',
+    scope: 'CGPA, attendance, fees, AI chatbot',
   },
 ]
 
@@ -155,7 +184,6 @@ export function LoginForm() {
         return
       }
 
-      // Fetch session data after successful login
       const sessionRes = await fetch('/api/auth/session')
       const sessionData = await sessionRes.json()
 
@@ -275,7 +303,7 @@ export function LoginForm() {
           </CardFooter>
         </Card>
 
-        {/* Test Credentials Card */}
+        {/* Demo Credentials Card — 5 roles */}
         <Card className="border border-gray-800 bg-[#111]">
           <CardHeader className="pb-3">
             <button
@@ -284,9 +312,9 @@ export function LoginForm() {
             >
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-[#a3a3a3]">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#C9A84C]/10">
-                  <span className="text-xs font-bold text-[#C9A84C]">?</span>
+                  <span className="text-xs font-bold text-[#C9A84C]">5</span>
                 </span>
-                Demo Login Credentials
+                Demo Accounts — Try Any Role
               </CardTitle>
               {showCredentials ? (
                 <ChevronUp className="h-4 w-4 text-[#737373]" />
@@ -297,9 +325,9 @@ export function LoginForm() {
           </CardHeader>
 
           {showCredentials && (
-            <CardContent className="space-y-3">
-              <p className="text-xs text-[#737373]">
-                Click any account below to auto-fill credentials
+            <CardContent className="space-y-2">
+              <p className="text-xs text-[#737373] pb-1">
+                Click any account to auto-fill credentials, then hit Sign In.
               </p>
               {testAccounts.map((account) => {
                 const Icon = account.icon
@@ -307,34 +335,37 @@ export function LoginForm() {
                   <button
                     key={account.role}
                     onClick={() => fillCredentials(account.email, account.password)}
-                    className={`flex w-full items-center gap-3 rounded-lg border ${account.borderColor} ${account.bgColor} p-3 text-left transition-all duration-200 hover:scale-[1.01] hover:shadow-md`}
+                    className={`relative flex w-full items-start gap-3 rounded-lg border ${account.borderColor} ${account.bgColor} p-3 text-left transition-all duration-200 hover:scale-[1.01] hover:shadow-md`}
                   >
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${account.bgColor}`}>
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${account.bgColor} ring-1 ring-inset ring-white/5`}>
                       <Icon className={`h-4 w-4 ${account.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold ${account.color}`}>
-                        {account.role}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className={`text-sm font-semibold ${account.color}`}>
+                          {account.role}
+                        </p>
+                        <span className="text-[10px] font-mono text-[#525252] shrink-0">
+                          {account.password}
+                        </span>
+                      </div>
                       <p className="text-xs text-[#e5e5e5] truncate">
-                        {'name' in account && account.name}
+                        {account.name}
                       </p>
                       <p className="text-[10px] text-[#525252] truncate">
                         {account.email}
                       </p>
+                      <p className="mt-1 text-[10px] text-[#737373] italic">
+                        {account.scope}
+                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] font-mono text-[#525252]">
-                        {account.password}
-                      </span>
-                      <Copy
-                        className="h-3 w-3 text-[#525252] hover:text-[#a3a3a3] transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          copyToClipboard(account.email, account.email)
-                        }}
-                      />
-                    </div>
+                    <Copy
+                      className="absolute top-2 right-2 h-3 w-3 text-[#525252] hover:text-[#a3a3a3] transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        copyToClipboard(account.email, account.email)
+                      }}
+                    />
                     {copiedEmail === account.email && (
                       <Check className="absolute top-2 right-2 h-3 w-3 text-green-400" />
                     )}
