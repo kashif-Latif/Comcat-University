@@ -1,0 +1,35 @@
+name: Keep Supabase Alive
+
+# Supabase free tier auto-pauses projects with no activity for ~1 week.
+# This workflow pings /api/health every 3 days so the project stays active.
+# The endpoint runs a cheap read against the `users` table, which counts as activity.
+
+on:
+  schedule:
+    # Runs at 04:00 UTC every 3 days (09:00 Pakistan Standard Time)
+    - cron: '0 4 */3 * *'
+  workflow_dispatch:  # Also allows manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping production /api/health
+        run: |
+          # Replace this URL with your deployed Vercel URL
+          URL="${{ secrets.KEEP_ALIVE_URL }}"
+          if [ -z "$URL" ]; then
+            echo "::error::Set the KEEP_ALIVE_URL secret in repo settings to your https://<project>.vercel.app/api/health"
+            exit 1
+          fi
+          echo "Pinging: $URL"
+          RESPONSE=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -o /tmp/body "$URL" || true)
+          CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d: -f2)
+          echo "Response:"
+          cat /tmp/body
+          echo ""
+          echo "HTTP $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "::warning::Health check returned non-200. Check the Supabase dashboard."
+            exit 1
+          fi
