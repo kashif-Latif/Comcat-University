@@ -9,11 +9,13 @@ declare module "next-auth" {
       email: string
       name: string
       image?: string | null
+      department?: string | null   // NEW — required for HOD scoping
     }
   }
 
   interface User {
     role?: string
+    department?: string | null     // NEW
   }
 }
 
@@ -21,5 +23,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     role: string
+    department?: string | null     // NEW
   }
 }

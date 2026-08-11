@@ -45,6 +45,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email as string,
             name: user.name as string,
             role: user.role as string,
+            department: (user.department as string) || null,   // NEW — HOD scoping needs this
           }
         } catch (error) {
           console.error('[AUTH] Error during authorize:', error)
@@ -58,6 +59,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role as string
         token.id = user.id as string
+        // Propagate department into the JWT so the server can read it later
+        token.department = (user as { department?: string | null }).department ?? null
       }
       return token
     },
@@ -65,6 +68,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as Record<string, unknown>).role = token.role
         ;(session.user as Record<string, unknown>).id = token.id
+        ;(session.user as Record<string, unknown>).department = token.department ?? null
       }
       return session
     },
