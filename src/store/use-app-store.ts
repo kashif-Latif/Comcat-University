@@ -19,10 +19,12 @@ export type ViewType =
   | "teacher-dashboard"
   | "teacher-students"
   | "teacher-attendance"
+  | "teacher-exams"           // NEW: manage exams + enter grades
   | "student-dashboard"
   | "student-subjects"
   | "student-attendance"
   | "student-fees"
+  | "student-grades"          // NEW: transcript + CGPA
 
 interface AppState {
   currentView: ViewType

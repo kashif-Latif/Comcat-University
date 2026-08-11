@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from '@/components/ui/sheet'
-import { LayoutDashboard, Users, ClipboardCheck, LogOut, Menu, GraduationCap, ChevronLeft } from 'lucide-react'
+import {
+  LayoutDashboard, Users, ClipboardCheck, LogOut, Menu, GraduationCap, ChevronLeft, ClipboardList,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface NavItem { label: string; view: ViewType; icon: React.ElementType }
@@ -19,6 +21,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', view: 'teacher-dashboard', icon: LayoutDashboard },
   { label: 'My Students', view: 'teacher-students', icon: Users },
   { label: 'Mark Attendance', view: 'teacher-attendance', icon: ClipboardCheck },
+  { label: 'Exams & Grades', view: 'teacher-exams', icon: ClipboardList },
 ]
 
 function SidebarNav({ collapsed, onItemClick }: { collapsed: boolean; onItemClick?: () => void }) {

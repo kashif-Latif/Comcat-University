@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { LayoutDashboard, BookOpen, ClipboardCheck, Receipt, LogOut, Menu, GraduationCap, ChevronLeft } from 'lucide-react'
+import { LayoutDashboard, BookOpen, ClipboardCheck, Receipt, LogOut, Menu, GraduationCap, ChevronLeft, Award } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface NavItem { label: string; view: ViewType; icon: React.ElementType }
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', view: 'student-dashboard', icon: LayoutDashboard },
   { label: 'My Subjects', view: 'student-subjects', icon: BookOpen },
   { label: 'Attendance', view: 'student-attendance', icon: ClipboardCheck },
+  { label: 'Grades & CGPA', view: 'student-grades', icon: Award },
   { label: 'Fees', view: 'student-fees', icon: Receipt },
 ]
 

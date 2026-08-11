@@ -27,33 +27,27 @@ import { TeacherLayout } from '@/components/teacher/teacher-layout'
 import { TeacherDashboard } from '@/components/teacher/teacher-dashboard'
 import { ViewStudents } from '@/components/teacher/view-students'
 import { MarkAttendance } from '@/components/teacher/mark-attendance'
+import { ManageExams } from '@/components/teacher/manage-exams'
 import { StudentLayout } from '@/components/student/student-layout'
 import { StudentDashboard } from '@/components/student/student-dashboard'
 import { MySubjects } from '@/components/student/my-subjects'
 import { MyAttendance } from '@/components/student/my-attendance'
 import { MyFees } from '@/components/student/my-fees'
+import { MyGrades } from '@/components/student/my-grades'
 import { AIChatWidget } from '@/components/ai-chat-widget'
 
 function AdminContent() {
   const { currentView } = useAppStore()
 
   switch (currentView) {
-    case 'admin-dashboard':
-      return <AdminDashboard />
-    case 'admin-students':
-      return <ManageStudents />
-    case 'admin-teachers':
-      return <ManageTeachers />
-    case 'admin-subjects':
-      return <ManageSubjects />
-    case 'admin-announcements':
-      return <ManageAnnouncements />
-    case 'admin-admissions':
-      return <ManageAdmissions />
-    case 'admin-messages':
-      return <ManageMessages />
-    default:
-      return <AdminDashboard />
+    case 'admin-dashboard': return <AdminDashboard />
+    case 'admin-students': return <ManageStudents />
+    case 'admin-teachers': return <ManageTeachers />
+    case 'admin-subjects': return <ManageSubjects />
+    case 'admin-announcements': return <ManageAnnouncements />
+    case 'admin-admissions': return <ManageAdmissions />
+    case 'admin-messages': return <ManageMessages />
+    default: return <AdminDashboard />
   }
 }
 
@@ -61,14 +55,11 @@ function TeacherContent() {
   const { currentView } = useAppStore()
 
   switch (currentView) {
-    case 'teacher-dashboard':
-      return <TeacherDashboard />
-    case 'teacher-students':
-      return <ViewStudents />
-    case 'teacher-attendance':
-      return <MarkAttendance />
-    default:
-      return <TeacherDashboard />
+    case 'teacher-dashboard': return <TeacherDashboard />
+    case 'teacher-students': return <ViewStudents />
+    case 'teacher-attendance': return <MarkAttendance />
+    case 'teacher-exams': return <ManageExams />
+    default: return <TeacherDashboard />
   }
 }
 
@@ -76,16 +67,12 @@ function StudentContent() {
   const { currentView } = useAppStore()
 
   switch (currentView) {
-    case 'student-dashboard':
-      return <StudentDashboard />
-    case 'student-subjects':
-      return <MySubjects />
-    case 'student-attendance':
-      return <MyAttendance />
-    case 'student-fees':
-      return <MyFees />
-    default:
-      return <StudentDashboard />
+    case 'student-dashboard': return <StudentDashboard />
+    case 'student-subjects': return <MySubjects />
+    case 'student-attendance': return <MyAttendance />
+    case 'student-grades': return <MyGrades />
+    case 'student-fees': return <MyFees />
+    default: return <StudentDashboard />
   }
 }
 
@@ -113,27 +100,14 @@ function AppContent() {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'home':
-        return (
-          <>
-            <HeroSection />
-            <HomepageGrid />
-          </>
-        )
-      case 'about':
-        return <AboutSection />
-      case 'news':
-        return <NewsSection />
-      case 'contact':
-        return <ContactSection />
-      case 'programs':
-        return <ProgramsSection />
-      case 'history':
-        return <HistorySection />
-      case 'admissions':
-        return <AdmissionsSection />
-      case 'login':
-        return <LoginForm />
+      case 'home': return (<><HeroSection /><HomepageGrid /></>)
+      case 'about': return <AboutSection />
+      case 'news': return <NewsSection />
+      case 'contact': return <ContactSection />
+      case 'programs': return <ProgramsSection />
+      case 'history': return <HistorySection />
+      case 'admissions': return <AdmissionsSection />
+      case 'login': return <LoginForm />
 
       case 'admin-dashboard':
       case 'admin-students':
@@ -142,50 +116,29 @@ function AppContent() {
       case 'admin-announcements':
       case 'admin-admissions':
       case 'admin-messages':
-        return (
-          <AdminLayout>
-            <AdminContent />
-          </AdminLayout>
-        )
+        return (<AdminLayout><AdminContent /></AdminLayout>)
 
       case 'teacher-dashboard':
       case 'teacher-students':
       case 'teacher-attendance':
-        return (
-          <TeacherLayout>
-            <TeacherContent />
-          </TeacherLayout>
-        )
+      case 'teacher-exams':
+        return (<TeacherLayout><TeacherContent /></TeacherLayout>)
 
       case 'student-dashboard':
       case 'student-subjects':
       case 'student-attendance':
+      case 'student-grades':
       case 'student-fees':
-        return (
-          <StudentLayout>
-            <StudentContent />
-          </StudentLayout>
-        )
+        return (<StudentLayout><StudentContent /></StudentLayout>)
 
-      default:
-        return (
-          <>
-            <HeroSection />
-            <HomepageGrid />
-          </>
-        )
+      default: return (<><HeroSection /><HomepageGrid /></>)
     }
   }
 
   const isPublicView = ['home', 'about', 'news', 'contact', 'programs', 'history', 'admissions', 'login'].includes(currentView)
 
   if (isAdminView || isTeacherView || isStudentView) {
-    return (
-      <>
-        {renderContent()}
-        <AIChatWidget />
-      </>
-    )
+    return (<>{renderContent()}<AIChatWidget /></>)
   }
 
   return (
