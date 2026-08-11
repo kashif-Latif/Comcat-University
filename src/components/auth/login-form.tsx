@@ -37,6 +37,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
+import type { ViewType } from '@/store/use-app-store'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -44,6 +45,16 @@ const loginSchema = z.object({
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
+
+// Given a role, return the view to jump to after successful login.
+function dashboardForRole(role: string): ViewType {
+  const r = role.toUpperCase()
+  if (r === 'ADMIN')   return 'admin-dashboard'
+  if (r === 'TEACHER') return 'teacher-dashboard'
+  if (r === 'VC')      return 'vc-dashboard'
+  if (r === 'HOD')     return 'hod-dashboard'
+  return 'student-dashboard'
+}
 
 const testAccounts = [
   {
@@ -113,14 +124,9 @@ export function LoginForm() {
   // If already logged in, redirect to dashboard
   if (session?.user) {
     const role = (session.user as Record<string, unknown>).role as string
-    const dashboardView =
-      role === 'ADMIN'
-        ? 'admin-dashboard'
-        : role === 'TEACHER'
-          ? 'teacher-dashboard'
-          : 'student-dashboard'
+    const dashboardView = dashboardForRole(role || 'STUDENT')
 
-    setTimeout(() => setCurrentView(dashboardView as typeof dashboardView & 'home'), 0)
+    setTimeout(() => setCurrentView(dashboardView), 0)
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-[#0a0a0a]">
         <Card className="w-full max-w-md border border-gray-800 bg-[#111]">
@@ -162,15 +168,7 @@ export function LoginForm() {
         }
 
         setUser(userData)
-
-        // Navigate to appropriate dashboard
-        const dashboardView =
-          userData.role === 'ADMIN'
-            ? 'admin-dashboard'
-            : userData.role === 'TEACHER'
-              ? 'teacher-dashboard'
-              : 'student-dashboard'
-        setCurrentView(dashboardView as typeof dashboardView & 'home')
+        setCurrentView(dashboardForRole(userData.role))
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')

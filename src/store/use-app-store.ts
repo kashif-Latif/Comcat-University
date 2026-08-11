@@ -19,12 +19,14 @@ export type ViewType =
   | "teacher-dashboard"
   | "teacher-students"
   | "teacher-attendance"
-  | "teacher-exams"           // NEW: manage exams + enter grades
+  | "teacher-exams"
   | "student-dashboard"
   | "student-subjects"
   | "student-attendance"
   | "student-fees"
-  | "student-grades"          // NEW: transcript + CGPA
+  | "student-grades"
+  | "vc-dashboard"          // NEW: Vice Chancellor executive dashboard
+  | "hod-dashboard"         // NEW: Head of Department scoped dashboard
 
 interface AppState {
   currentView: ViewType

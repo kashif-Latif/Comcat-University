@@ -34,6 +34,8 @@ import { MySubjects } from '@/components/student/my-subjects'
 import { MyAttendance } from '@/components/student/my-attendance'
 import { MyFees } from '@/components/student/my-fees'
 import { MyGrades } from '@/components/student/my-grades'
+import { ExecutiveLayout } from '@/components/executive/executive-layout'
+import { ExecutiveDashboard } from '@/components/executive/executive-dashboard'
 import { AIChatWidget } from '@/components/ai-chat-widget'
 
 function AdminContent() {
@@ -94,9 +96,11 @@ function AppContent() {
     }
   }, [session, status, user, setUser])
 
-  const isAdminView = currentView.startsWith('admin-')
+  const isAdminView   = currentView.startsWith('admin-')
   const isTeacherView = currentView.startsWith('teacher-')
   const isStudentView = currentView.startsWith('student-')
+  const isVcView      = currentView === 'vc-dashboard'
+  const isHodView     = currentView === 'hod-dashboard'
 
   const renderContent = () => {
     switch (currentView) {
@@ -131,13 +135,19 @@ function AppContent() {
       case 'student-fees':
         return (<StudentLayout><StudentContent /></StudentLayout>)
 
+      case 'vc-dashboard':
+        return (<ExecutiveLayout variant="VC"><ExecutiveDashboard /></ExecutiveLayout>)
+
+      case 'hod-dashboard':
+        return (<ExecutiveLayout variant="HOD"><ExecutiveDashboard /></ExecutiveLayout>)
+
       default: return (<><HeroSection /><HomepageGrid /></>)
     }
   }
 
   const isPublicView = ['home', 'about', 'news', 'contact', 'programs', 'history', 'admissions', 'login'].includes(currentView)
 
-  if (isAdminView || isTeacherView || isStudentView) {
+  if (isAdminView || isTeacherView || isStudentView || isVcView || isHodView) {
     return (<>{renderContent()}<AIChatWidget /></>)
   }
 
